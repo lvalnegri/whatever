@@ -1,11 +1,22 @@
+# QUICK MAP OF LONDON SANTANDER CYCLES
+lapply(c('data.table', 'jsonlite', 'leaflet'), require, character.only = TRUE)
+stations <- data.table(fromJSON(txt = 'https://api.tfl.gov.uk/bikepoint'), key = 'id')
+m <- stations %>% 
+        leaflet() %>% 
+        addTiles(
+            'http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', 
+            attribution = 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        ) %>%
+        setView(lng = mean(stations$lon), lat = mean(stations$lat), zoom = 12) %>% 
+        addCircleMarkers(stroke = FALSE, radius = 4, color = '#ffa500', weight = 3, fillOpacity = 0.8, popup = ~commonName)
+m
+
 lapply(c('data.table', 'dplyr', 'DT', 'leaflet', 'RMySQL', 'shiny'), require, character.only = TRUE)
 
-# CONNECTION TO DATABASE AND DOWNLOAD MAIN DATA
 db_conn <- dbConnect(MySQL(), group = 'homeserver', dbname = 'londonCycleHire')
 data.table(dbGetQuery(db_conn, 'SELECT * FROM stations WHERE is_active') )
 setnames(stations, c('long', 'lat'), c('X_lon', 'Y_lat') )
 
-# DT TO DISPLAY DATA IN A TABULAR FORM
 t <- datatable(stations,
         rownames = FALSE,
         class = 'display',
@@ -20,7 +31,6 @@ t <- datatable(stations,
 )
 t
 
-# LEAFLET TO DISPLAY DATA IN A MAP
 m <- stations %>% leaflet() %>% 
         addProviderTiles("OpenStreetMap.BlackAndWhite") %>%
         setView(lng = mean(stations$X_lon), lat = mean(stations$Y_lat), zoom = 12) %>%
